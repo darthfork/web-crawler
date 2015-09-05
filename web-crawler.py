@@ -13,10 +13,17 @@ def fetch_google_results(passed_query):
     urls.append(result['url'])
   return urls
 
+
+def parse_page(url,query):
+    handle = urllib.urlopen(url)
+    html_gunk = handle.read()
+    print html_gunk
+
 def main():
   query = raw_input ( 'Query: ' )
   search_results = fetch_google_results(query)
-  print search_results
+  parse_page(search_results[0],query)
 
 if __name__ == '__main__':
   main()
+
