@@ -14,7 +14,8 @@ def fetch_google_results(passed_query):
   return urls
 
 def main():
-  search_results = fetch_google_results('dog')
+  query = raw_input ( 'Query: ' )
+  search_results = fetch_google_results(query)
   print search_results
 
 if __name__ == '__main__':
