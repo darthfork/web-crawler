@@ -2,11 +2,14 @@ import re
 import urllib
 import json
 import HTMLParser
+import ranking-function
+from ranking-function import BM25
 class WebCrawler:
+
   def __init__(self,query):
     self.query = query
-    self.urls = []
-    self.visited = dict()
+    self.urls = [] # List of URLs to be visited
+    self.visited = dict() # Dictionary keeping track of all the visited URLs
 
   def fetch_google_results(self):
     search_query = urllib.urlencode ( { 'q' : self.query } )
@@ -18,14 +21,16 @@ class WebCrawler:
     for result in results:
       self.urls.append(result['url'])
 
-  def crawler(self):
-    self.fetch_google_results() #build URLs
-
-
   def parse_page(self,url,query):
       handle = urllib.urlopen(url)
       html_gunk = handle.read()
       print html_gunk
+
+  def crawl(self):
+    self.fetch_google_results() #build URLs
+
+
+
 
 
 def main():
