@@ -4,12 +4,15 @@ import json
 import HTMLParser
 import ranking-function
 from ranking-function import BM25
+from lxml.html import parse
+
 class WebCrawler:
 
   def __init__(self,query):
     self.query = query
     self.urls = [] # List of URLs to be visited
     self.visited = dict() # Dictionary keeping track of all the visited URLs
+    self.num_links = 0
 
   def fetch_google_results(self):
     search_query = urllib.urlencode ( { 'q' : self.query } )
@@ -21,16 +24,15 @@ class WebCrawler:
     for result in results:
       self.urls.append(result['url'])
 
-  def parse_page(self,url,query):
-      handle = urllib.urlopen(url)
-      html_gunk = handle.read()
-      print html_gunk
+  def parse_page(self,url,query): #Extract all the links from the page and add them to the URLs list
+    #
 
-  def crawl(self):
-    self.fetch_google_results() #build URLs
-
-
-
+  def crawl(self): # Pop first URL from the URLs list and add it to the visited list and then parse them
+    while num_links != 100: #initially trying for 100 links
+      url = urls.pop(-1)
+      num_links += 1
+      visited[num_links] = url
+      parse_page(url,self.query)
 
 
 def main():
