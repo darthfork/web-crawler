@@ -4,6 +4,7 @@ import json
 # import ranking-function
 # from ranking-function import BM25
 from BeautifulSoup import BeautifulSoup
+from pygoogle import pygoogle
 
 class WebCrawler:
 
@@ -12,6 +13,7 @@ class WebCrawler:
     self.urls = [] # List of URLs to be visited and their depth [(url,depth)]
     self.visited = {} # Dictionary keeping track of all the visited URLs
     self.valid_mime_types = ["text/html"]
+    self.connectives = ['or','and','is','this']
     self.depth_reached = 0
 
   def fetch_google_results(self): #optimize this step
@@ -51,21 +53,31 @@ class WebCrawler:
 
         href = link.get('href')
 
-        #Filter the 'href' variable above to determine if it is relevant to the query
+        #Filter the href for URLs with CGI ending etc.
 
-        self.urls.append((href,new_depth))
+        #Filter the 'href' variable above to determine if it is relevant to the query
+        query_terms = self.query.split(' ')
+        flag = True
+        for q in query_terms:
+          if q.lower() in self.connectives:
+            continue
+          elif q.lower() not in href:
+            flag = False
+
+        if flag == True:
+          self.urls.append((href,new_depth))
 
 
   def crawl(self):
     # Pop first URL from the URLs list and add it to the visited list and then parse them
 
-    while self.depth_reached <= 2: #initially trying till depth 5
+    while self.depth_reached <= 3: #initially trying till depth 2
 
-      url_tuple = self.urls.pop(0)
+      url_tuples = self.urls.pop(0)
 
-      url = url_tuple[0]
+      url = url_tuples[0]
 
-      depth = url_tuple[1]
+      depth = url_tuples[1]
 
       self.depth_reached = depth
       try:
