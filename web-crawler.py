@@ -1,16 +1,18 @@
 import re
 import urllib
 import json
-# import ranking-function
-# from ranking-function import BM25
+import urlnorm
+import ranking_function
+from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
+import Queue as Q
 
 class WebCrawler:
 
   def __init__(self,query):
     self.query = query
-    self.urls = [] # List of URLs to be visited and their depth [(url,depth)]
+    self.urls = Q.PriorityQueue() # Priority Queue of URLs to be visited and their depth [(score,(url,depth))]
     self.visited = {} # Dictionary keeping track of all the visited URLs
     self.valid_mime_types = ["text/html"]
     self.connectives = ['or','and','is','this']
@@ -32,14 +34,14 @@ class WebCrawler:
 
     for result in results:
 
-      self.urls.append((result['url'], 1)) #All google results are at depth 1 with google.com being at depth 0
+      self.urls.put((0,(result['url'], 1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
 
   def normalize_url(self,url):
-    return url #URL normalization method skeleton
+    return urlnorm.norm(url).encode('utf8') #URL normalization method skeleton
 
 
-  def print_urls(self):
-    print self.urls
+  def print_visited_urls(self):
+    print self.visited
 
   def parse_page(self,html_document,depth,query): #Extract all the links from the page and add them to the URLs list
 
@@ -65,19 +67,20 @@ class WebCrawler:
             flag = False
 
         if flag == True:
+          #Create priority score for list before entering it in the list
           self.urls.append((href,new_depth))
 
 
   def crawl(self):
     # Pop first URL from the URLs list and add it to the visited list and then parse them
 
-    while self.depth_reached <= 3: #initially trying till depth 2
+    while self.depth_reached <= 3 and not self.urls.empty(): #initially trying till depth 2
 
-      url_tuples = self.urls.pop(0)
+      url_tuples = self.urls.get()
 
-      url = url_tuples[0]
+      url = url_tuples[1][0]
 
-      depth = url_tuples[1]
+      depth = url_tuples[1][1]
 
       self.depth_reached = depth
       try:
