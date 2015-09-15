@@ -1,12 +1,14 @@
+import os
 import re
 import urllib
 import urlnorm
 import ranking_function
+import Queue as Q
 from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
 from urlparse import urlparse
-import Queue as Q
+
 
 class WebCrawler:
 
@@ -21,11 +23,17 @@ class WebCrawler:
 
   def calculate_BM25_score(url):
     urlib.urlretrieve(url,"temp.html")
-    fn_docs = 'temp.html'
-    bm25 = BM25(fn_docs,delimiter=' ')
+    webpage = 'temp.html'
+    bm25 = BM25(webpage,delimiter=' ')
     query = self.query.split()
     #get single normalized value of BM25 score for a page
     score = bm25.BM25Score(query)
+
+    try:
+      os.remove(webpage)
+    except OSError:
+      print "Unable to remove File"
+
     return score
 
 
