@@ -2,10 +2,9 @@ import re
 import urllib
 import json
 import urlnorm
-import ranking_function
-from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
+from urlparse import urlparse
 import Queue as Q
 
 class WebCrawler:
@@ -16,13 +15,14 @@ class WebCrawler:
     self.visited = {} # Dictionary keeping track of all the visited URLs
     self.valid_mime_types = ["text/html"]
     self.connectives = ['or','and','is','this']
+    self.illegal_extensions = ['gci']
     self.depth_reached = 0
 
   def fetch_google_results(self): #optimize this step
     search_query = urllib.urlencode ( { 'q' : self.query } )
     #Find a better way to get Google Results
 
-    res1 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&' + search_query + '&rsz=5').read()
+    res1 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5').read()
 
     res2 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5&start=5').read()
 
@@ -37,13 +37,16 @@ class WebCrawler:
       self.urls.put((0,(result['url'], 1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
 
   def normalize_url(self,url):
-    return urlnorm.norm(url).encode('utf8') #URL normalization method skeleton
+    return urlnorm.norm(url).encode('utf8') #URL normalization method
 
 
   def print_visited_urls(self):
     print self.visited
 
-  def parse_page(self,html_document,depth,query): #Extract all the links from the page and add them to the URLs list
+  def parse_page(self,html_document,depth,query):
+    url_components = urlparse(self.url)
+    if url_components.path.split('.')[1] is in self.illegal_extensions:
+      continue
 
     soup = BeautifulSoup(html_document)
 
