@@ -15,7 +15,7 @@ class WebCrawler:
     self.visited = {} # Dictionary keeping track of all the visited URLs
     self.valid_mime_types = ["text/html"]
     self.connectives = ['or','and','is','this']
-    self.illegal_extensions = ['gci']
+    self.illegal_extensions = ['gci','gif','jpg','png','css','js']
     self.depth_reached = 0
 
   def fetch_google_results(self): #optimize this step
@@ -46,7 +46,7 @@ class WebCrawler:
   def parse_page(self,html_document,depth,query):
     url_components = urlparse(self.url)
     if url_components.path.split('.')[1] is in self.illegal_extensions:
-      continue
+      continue #Add a regular expression for excluding -cgi-bin | -images | -css
 
     soup = BeautifulSoup(html_document)
 
