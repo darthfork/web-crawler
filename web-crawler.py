@@ -21,7 +21,7 @@ class WebCrawler:
     search = pygoogle(query)
     results = search.get_urls()[:10] #Only get the first 10 results
     for result in results:
-      self.urls.put((0,(result,1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
+      self.urls.put((0,(result.encode('utf8'),1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
 
   def normalize_url(self,url):
     return urlnorm.norm(url).encode('utf8') #URL normalization method
