@@ -1,6 +1,5 @@
 import re
 import urllib
-import json
 import urlnorm
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
@@ -19,22 +18,10 @@ class WebCrawler:
     self.depth_reached = 0
 
   def fetch_google_results(self): #optimize this step
-    search_query = urllib.urlencode ( { 'q' : self.query } )
-    #Find a better way to get Google Results
-
-    res1 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5').read()
-
-    res2 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5&start=5').read()
-
-    json1 = json.loads ( res1 )
-
-    json2 = json.loads ( res2 )
-
-    results = json1 [ 'responseData' ] [ 'results' ] + json2 [ 'responseData' ] [ 'results' ]
-
+    search = pygoogle(query)
+    results = search.get_urls()[:10] #Only get the first 10 results
     for result in results:
-
-      self.urls.put((0,(result['url'], 1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
+      self.urls.put((0,(result,1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
 
   def normalize_url(self,url):
     return urlnorm.norm(url).encode('utf8') #URL normalization method
@@ -71,7 +58,7 @@ class WebCrawler:
 
         if flag == True:
           #Create priority score for list before entering it in the list
-          self.urls.append((href,new_depth))
+          self.urls.put((0,(href,new_depth)))
 
 
   def crawl(self):
