@@ -1,6 +1,8 @@
 import re
 import urllib
 import urlnorm
+import ranking_function
+from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
 from urlparse import urlparse
@@ -25,6 +27,13 @@ class WebCrawler:
 
   def normalize_url(self,url):
     return urlnorm.norm(url).encode('utf8') #URL normalization method
+
+  def calculate_BM25_score(url):
+    fn_docs = unicode(BeautifulSoup(urllib.urlopen(url)))
+    bm25 = BM25(fn_docs,delimiter=' ')
+    query = self.query.split()
+    scores = bm25.BM25Score(query)
+    tfidf = bm25.TFIDF()
 
 
   def print_visited_urls(self):
@@ -62,15 +71,15 @@ class WebCrawler:
 
 
   def crawl(self):
-    # Pop first URL from the URLs list and add it to the visited list and then parse them
+    # Pop the URL based on priority
 
-    while self.depth_reached <= 3 and not self.urls.empty(): #initially trying till depth 2
+    while len(self.visited) <= 100 and not self.urls.empty(): #initially trying till depth 2
 
-      url_tuples = self.urls.get()
+      next_url = self.urls.get()
 
-      url = url_tuples[1][0]
+      url = next_url[1][0]
 
-      depth = url_tuples[1][1]
+      depth = next_url[1][1]
 
       self.depth_reached = depth
       try:
