@@ -20,12 +20,13 @@ class WebCrawler:
     self.depth_reached = 0
 
   def calculate_BM25_score(url):
-    fn_docs = unicode(BeautifulSoup(urllib.urlopen(url)))
+    urlib.urlretrieve(url,"temp.html")
+    fn_docs = 'temp.html'
     bm25 = BM25(fn_docs,delimiter=' ')
     query = self.query.split()
     #get single normalized value of BM25 score for a page
-    scores = bm25.BM25Score(query)
-    tfidf = bm25.TFIDF()
+    score = bm25.BM25Score(query)
+    return score
 
 
   def fetch_google_results(self): #optimize this step
@@ -64,7 +65,7 @@ class WebCrawler:
   def crawl(self):
     # Pop the URL based on priority
 
-    while len(self.visited) <= 100 and not self.urls.empty(): #initially trying till depth 2
+    while len(self.visited) <= 20 and not self.urls.empty(): # Initially trying to visit 20 pages
 
       next_url = self.urls.get()
 

@@ -21,7 +21,7 @@ class BM25 :
     def buildDictionary(self) :
         raw_data = []
         try:
-            for line in self.fn_docs:
+            for line in file(self.fn_docs):
                 raw_data.append(line.strip().split(self.delimiter))
             self.dictionary.add_documents(raw_data)
         except IOError:
@@ -29,7 +29,7 @@ class BM25 :
 
     def TFIDF_Generator(self, base=math.e) :
         docTotalLen = 0
-        for line in self.fn_docs:
+        for line in file(self.fn_docs):
             doc = line.strip().split(self.delimiter)
             docTotalLen += len(doc)
             self.DocLen.append(len(doc))
@@ -57,7 +57,7 @@ class BM25 :
                 below = ((doc[term]) + k1*(1 - b + b*doc_terms_len/self.DocAvgLen))
                 tmp_score.append(self.DocIDF[term] * upper / below)
             scores.append(sum(tmp_score))
-        return scores
+        return sum(scores)
 
     def TFIDF(self) :
         tfidf = []
