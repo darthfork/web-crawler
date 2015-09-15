@@ -19,22 +19,24 @@ class WebCrawler:
     self.illegal_extensions = ['gci','gif','jpg','png','css','js']
     self.depth_reached = 0
 
-  def fetch_google_results(self): #optimize this step
-    search = pygoogle(query)
-    results = search.get_urls()[:10] #Only get the first 10 results
-    for result in results:
-      self.urls.put((0,(result.encode('utf8'),1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
-
-  def normalize_url(self,url):
-    return urlnorm.norm(url).encode('utf8') #URL normalization method
-
   def calculate_BM25_score(url):
     fn_docs = unicode(BeautifulSoup(urllib.urlopen(url)))
     bm25 = BM25(fn_docs,delimiter=' ')
     query = self.query.split()
+    #get single normalized value of BM25 score for a page
     scores = bm25.BM25Score(query)
     tfidf = bm25.TFIDF()
 
+
+  def fetch_google_results(self): #optimize this step
+    search = pygoogle(query)
+    results = search.get_urls()[:10] #Only get the first 10 results
+    for result in results:
+      score = self.calculate_BM25_score(result)
+      self.urls.put((score,(result.encode('utf8'),1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
+
+  def normalize_url(self,url):
+    return urlnorm.norm(url).encode('utf8') #URL normalization method
 
   def print_visited_urls(self):
     print self.visited
@@ -54,20 +56,9 @@ class WebCrawler:
 
         href = link.get('href')
 
-        #Filter the href for URLs with CGI ending etc.
-
-        #Filter the 'href' variable above to determine if it is relevant to the query
-        query_terms = self.query.split(' ')
-        flag = True
-        for q in query_terms:
-          if q.lower() in self.connectives:
-            continue
-          elif q.lower() not in href:
-            flag = False
-
-        if flag == True:
-          #Create priority score for list before entering it in the list
-          self.urls.put((0,(href,new_depth)))
+        # Calculate BM25 score for the URL
+        score = self.calculate_BM25_score(url)
+        self.urls.put((score,(href,new_depth)))
 
 
   def crawl(self):
