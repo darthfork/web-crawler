@@ -63,7 +63,7 @@ class WebCrawler:
 
 
   def normalize_url(self,url):
-    return str(urlnorm.norm(url)) #URL normalization method
+    return str(urlnorm.norm(url).encode("utf-8")) #URL normalization method
     #Normalization temporarily removed
 
   def is_illegal_folder(self,url):
