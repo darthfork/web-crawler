@@ -19,7 +19,8 @@ class WebCrawler:
     self.visited = {} # Dictionary keeping track of all the visited URLs
     self.valid_mime_types = ["text/html","text/plain","text/enriched"]
     self.connectives = ['or','and','is','this']
-    self.illegal_extensions = ['gci','gif','jpg','png','css','js']
+    self.illegal_extensions = ['gci','gif','jpg','png','css','js','mp3','mp4','mkv']
+    self.illegal_folders = ['/cgi-bin/','/images/','/javascripts/','/js/','/css/','/stylesheets/']
     self.depth_reached = 0
     self.rp = robotparser.RobotFileParser()
     self.url_controller = customURLlib()
@@ -49,11 +50,16 @@ class WebCrawler:
   def normalize_url(self,url):
     return urlnorm.norm(url).encode('utf8') #URL normalization method
 
+  def is_illegal_folder(self,url):
+    for f in self.illegal_folders:
+        if f in url:
+          return False
+    return True
 
   def parse_page(self,html_document,depth,query):
     url_components = urlparse(self.url)
     if url_components.path.split('.')[1] is in self.illegal_extensions:
-      continue #Add a regular expression for excluding -cgi-bin | -images | -css
+      continue
 
     soup = BeautifulSoup(html_document)
 
@@ -63,10 +69,7 @@ class WebCrawler:
 
       href = link.get('href')
 
-      if not rp.can_fetch("*", href):
-        continue
-
-      if self.normalize_url(href) not in self.visited:
+      if (rp.can_fetch("*", href) == True) and (self.normalize_url(href) not in self.visited) and (self.is_illegal_folder(href) == True):
 
         # Calculate BM25 score for the URL
         score = self.calculate_BM25_score(url)
