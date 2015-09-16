@@ -24,8 +24,8 @@ class WebCrawler:
     self.rp = robotparser.RobotFileParser()
     self.url_controller = customURLlib()
 
-  def calculate_BM25_score(url):
-    url_controller.retrieve(url,"temp.html")
+  def calculate_BM25_score(self,url):
+    self.url_controller.retrieve(url,"temp.html")
     webpage = 'temp.html'
     bm25 = BM25(webpage,delimiter=' ')
     query = self.query.split()
@@ -39,7 +39,10 @@ class WebCrawler:
     return score
 
   # #Alternate Method for Testing | To be commented out if not in Use
-  # def fetch_google_results(self): #optimize this step
+  # def fetch_google_results(self):
+  #   import urllib
+  #   import json
+  #   print "Searcing Google"
   #   search_query = urllib.urlencode ( { 'q' : self.query } )
   #   #Find a better way to get Google Results
 
@@ -56,10 +59,12 @@ class WebCrawler:
   #   results = json1 [ 'responseData' ] [ 'results' ] + json2 [ 'responseData' ] [ 'results' ]
 
   #   for result in results:
+  #     print result
   #     score = self.calculate_BM25_score(result)
   #     self.urls.put((score,(result.encode('utf8'),1))) #All google results are at depth 1 with google.com being at depth 0
 
   def fetch_google_results(self):
+    print "Searching Google"
     search = pygoogle(self.query)
     results = search.get_urls()[:10] #Only get the first 10 results
     print "Google Results Fetched"
