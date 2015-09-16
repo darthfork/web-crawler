@@ -21,6 +21,7 @@ class WebCrawler:
     self.connectives = ['or','and','is','this']
     self.illegal_extensions = ['gci','gif','jpg','png','css','js']
     self.depth_reached = 0
+    self.rp = robotparser.RobotFileParser()
 
   def calculate_BM25_score(url):
     urlib.urlretrieve(url,"temp.html")
@@ -59,9 +60,12 @@ class WebCrawler:
 
     for link in soup.findAll('a', attrs={'href': re.compile("^(http|https)://")}):
 
-      if self.normalize_url(link) not in self.visited:
+      href = link.get('href')
 
-        href = link.get('href')
+      if not rp.can_fetch("*", href):
+        continue
+
+      if self.normalize_url(href) not in self.visited:
 
         # Calculate BM25 score for the URL
         score = self.calculate_BM25_score(url)
