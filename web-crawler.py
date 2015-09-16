@@ -5,6 +5,7 @@ import ranking_function
 import Queue as Q
 import robotparser
 import customurllib
+import urlparse
 from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
@@ -21,7 +22,7 @@ class WebCrawler:
     self.illegal_extensions = ['gci','gif','jpg','png','css','js','mp3','mp4','mkv']
     self.illegal_folders = ['/cgi-bin/','/images/','/javascripts/','/js/','/css/','/stylesheets/']
     self.depth_reached = 0
-    self.rp = robotparser.RobotFileParser()
+    # self.rp = robotparser.RobotFileParser()
     self.url_controller = customURLlib()
 
   def calculate_BM25_score(self,url):
@@ -75,7 +76,8 @@ class WebCrawler:
 
 
   def normalize_url(self,url):
-    return urlnorm.norm(url).encode('utf8') #URL normalization method
+    return str(urlnorm.norm(url)) #URL normalization method
+    #Normalization temporarily removed
 
   def is_illegal_folder(self,url):
     for f in self.illegal_folders:
@@ -84,38 +86,39 @@ class WebCrawler:
     return False
 
   def is_illegal_extension(self,url):
-    url_components = urlparse.urlparse(url)
-    if url_components.path.split('.')[1] in self.illegal_extensions:
-      return True
+    url_components = urlparse.urlparse(url).path.split('.')
+    if len(url_components)>1:
+      if url_components[1] in self.illegal_extensions:
+        return True
+      else:
+        return False
     else:
       return False
 
 
   def parse_page(self,html_document,depth,query):
-
+    print "Parsing URL"
     soup = BeautifulSoup(html_document)
-
     new_depth = depth+1
-
+    print "Finding Links"
     for link in soup.findAll('a', attrs={'href': re.compile("^(http|https)://")}):
-
-      href = link.get('href')
-
-      if (self.rp.can_fetch("*", href) == True) and (self.normalize_url(href) not in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False):
-        score = self.calculate_BM25_score(url) #BM25 score for the webpage
+      href = str(link.get('href'))
+      print "Link Found: " + href
+      if not(self.normalize_url( href ) in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False):
+        score = self.calculate_BM25_score(href) #BM25 score for the webpage
         self.urls.put((score,(href,new_depth)))
 
 
   def crawl(self):
-    # Pop the URL based on priority
 
-    while len(self.visited) <= 100 and not self.urls.empty(): # Initially trying to visit 20 pages
+    while len(self.visited) <= 100 and not self.urls.empty():
 
       next_url = self.urls.get()
+      score = int(next_url[0])
+      url = str(next_url[1][0])
 
-      url = next_url[1][0]
+      depth = int(next_url[1][1])
 
-      depth = next_url[1][1]
       print "Now Crawling: " + str(url)
       self.depth_reached = depth
       try:
@@ -124,19 +127,20 @@ class WebCrawler:
 
         mime_type = document.info().gettype()
 
+      # Normalise the URL before inserting
+
+        self.visited[self.normalize_url(url)] = depth
+
+        if (mime_type in self.valid_mime_types):
+          self.parse_page(document,depth,self.query)
+        else:
+          continue
       except IOError as e:
         print e
 
-      # Normalise the URL before inserting
-
-      self.visited[self.normalize_url(url)] = depth
-
-      if mime_type in self.valid_mime_types:
-        self.parse_page(document,depth,self.query)
-      else:
-        continue
 
     print self.visited
+    print self.urls
 
 def main():
   query = 'dog'#raw_input ( 'Query: ' )
