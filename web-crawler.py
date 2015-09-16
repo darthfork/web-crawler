@@ -39,40 +39,40 @@ class WebCrawler:
 
     return score
 
-  #Alternate Method for Testing | To be commented out if not in Use
-  def fetch_google_results(self):
-    import urllib
-    import json
-    print "Searcing Google"
-    search_query = urllib.urlencode ( { 'q' : self.query } )
-    #Find a better way to get Google Results
+  # #Alternate Method for Testing | To be commented out if not in Use
+  # def fetch_google_results(self):
+  #   import urllib
+  #   import json
+  #   print "Searcing Google"
+  #   search_query = urllib.urlencode ( { 'q' : self.query } )
+  #   #Find a better way to get Google Results
 
 
-    res1 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5').read()
+  #   res1 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5').read()
 
-    res2 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5&start=5').read()
+  #   res2 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5&start=5').read()
 
 
-    json1 = json.loads ( res1 )
+  #   json1 = json.loads ( res1 )
 
-    json2 = json.loads ( res2 )
+  #   json2 = json.loads ( res2 )
 
-    results = json1 [ 'responseData' ] [ 'results' ] + json2 [ 'responseData' ] [ 'results' ]
+  #   results = json1 [ 'responseData' ] [ 'results' ] + json2 [ 'responseData' ] [ 'results' ]
 
-    for result in results:
-      print result['url']
-      score = self.calculate_BM25_score(result['url'])
-      self.urls.put((score,(str(result['url']),1))) #All google results are at depth 1 with google.com being at depth 0
+  #   for result in results:
+  #     print result['url']
+  #     score = self.calculate_BM25_score(result['url'])
+  #     self.urls.put((score,(str(result['url']),1))) #All google results are at depth 1 with google.com being at depth 0
 
   #============= METHOD FOR GOOGLE SEARCHING =======================
-  # def fetch_google_results(self):
-  #   print "Searching Google"
-  #   search = pygoogle(self.query)
-  #   results = search.get_urls()[:10] #Only get the first 10 results
-  #   print "Google Results Fetched"
-  #   for result in results:
-  #     score = self.calculate_BM25_score(result)
-  #     self.urls.put((score,(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
+  def fetch_google_results(self):
+    print "Searching Google"
+    search = pygoogle(self.query)
+    results = search.get_urls()[:10] #Only get the first 10 results
+    for result in results:
+      print "Google Result: " + str(result)
+      score = self.calculate_BM25_score(result)
+      self.urls.put((score,(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
 
 
   def normalize_url(self,url):
@@ -100,10 +100,9 @@ class WebCrawler:
     print "Parsing URL"
     soup = BeautifulSoup(html_document)
     new_depth = depth+1
-    print "Finding Links"
     for link in soup.findAll('a', attrs={'href': re.compile("^(http|https)://")}):
       href = str(link.get('href'))
-      print "Link Found: " + href
+      print "Now Crawling: " + str(href)
       if not(self.normalize_url( href ) in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False):
         score = self.calculate_BM25_score(href) #BM25 score for the webpage
         self.urls.put((score,(href,new_depth)))
@@ -143,7 +142,7 @@ class WebCrawler:
     print self.urls
 
 def main():
-  query = 'dog'#raw_input ( 'Query: ' )
+  query = raw_input ( 'Query: ' )
 
   crawler = WebCrawler(query)
 
