@@ -1,15 +1,15 @@
 import os
 import re
-import urllib
 import urlnorm
 import ranking_function
 import Queue as Q
 import robotparser
+import customurllib
 from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
 from urlparse import urlparse
-
+from customurllib import customURLlib
 
 class WebCrawler:
 
@@ -22,9 +22,10 @@ class WebCrawler:
     self.illegal_extensions = ['gci','gif','jpg','png','css','js']
     self.depth_reached = 0
     self.rp = robotparser.RobotFileParser()
+    self.url_controller = customURLlib()
 
   def calculate_BM25_score(url):
-    urlib.urlretrieve(url,"temp.html")
+    url_controller.retrieve(url,"temp.html")
     webpage = 'temp.html'
     bm25 = BM25(webpage,delimiter=' ')
     query = self.query.split()
@@ -38,7 +39,7 @@ class WebCrawler:
     return score
 
 
-  def fetch_google_results(self): #optimize this step
+  def fetch_google_results(self):
     search = pygoogle(query)
     results = search.get_urls()[:10] #Only get the first 10 results
     for result in results:
@@ -86,7 +87,7 @@ class WebCrawler:
       self.depth_reached = depth
       try:
 
-        document = urllib.urlopen(url)
+        document = url_controller.open(url)
 
         mime_type = document.info().gettype()
 
