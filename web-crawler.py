@@ -8,7 +8,6 @@ import customurllib
 from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
-from urlparse import urlparse
 from customurllib import customURLlib
 
 class WebCrawler:
@@ -41,11 +40,13 @@ class WebCrawler:
 
 
   def fetch_google_results(self):
-    search = pygoogle(query)
+    search = pygoogle(self.query)
     results = search.get_urls()[:10] #Only get the first 10 results
+    print "Google Results Fetched"
     for result in results:
       score = self.calculate_BM25_score(result)
       self.urls.put((score,(result.encode('utf8'),1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
+
 
   def normalize_url(self,url):
     return urlnorm.norm(url).encode('utf8') #URL normalization method
@@ -53,13 +54,18 @@ class WebCrawler:
   def is_illegal_folder(self,url):
     for f in self.illegal_folders:
         if f in url:
-          return False
-    return True
+          return True
+    return False
+
+  def is_illegal_extension(self,url):
+    url_components = urlparse.urlparse(url)
+    if url_components.path.split('.')[1] in self.illegal_extensions:
+      return True
+    else:
+      return False
+
 
   def parse_page(self,html_document,depth,query):
-    url_components = urlparse(self.url)
-    if url_components.path.split('.')[1] is in self.illegal_extensions:
-      continue
 
     soup = BeautifulSoup(html_document)
 
@@ -69,10 +75,8 @@ class WebCrawler:
 
       href = link.get('href')
 
-      if (rp.can_fetch("*", href) == True) and (self.normalize_url(href) not in self.visited) and (self.is_illegal_folder(href) == True):
-
-        # Calculate BM25 score for the URL
-        score = self.calculate_BM25_score(url)
+      if (rp.can_fetch("*", href) == True) and (self.normalize_url(href) not in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False):
+        score = self.calculate_BM25_score(url) #BM25 score for the webpage
         self.urls.put((score,(href,new_depth)))
 
 
@@ -86,7 +90,7 @@ class WebCrawler:
       url = next_url[1][0]
 
       depth = next_url[1][1]
-
+      print "Now Crawling: " + str(url)
       self.depth_reached = depth
       try:
 
