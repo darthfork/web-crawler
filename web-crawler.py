@@ -4,6 +4,7 @@ import urllib
 import urlnorm
 import ranking_function
 import Queue as Q
+import robotparser
 from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
