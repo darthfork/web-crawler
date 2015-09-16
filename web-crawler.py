@@ -38,6 +38,26 @@ class WebCrawler:
 
     return score
 
+  # #Alternate Method for Testing | To be commented out if not in Use
+  # def fetch_google_results(self): #optimize this step
+  #   search_query = urllib.urlencode ( { 'q' : self.query } )
+  #   #Find a better way to get Google Results
+
+
+  #   res1 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5').read()
+
+  #   res2 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5&start=5').read()
+
+
+  #   json1 = json.loads ( res1 )
+
+  #   json2 = json.loads ( res2 )
+
+  #   results = json1 [ 'responseData' ] [ 'results' ] + json2 [ 'responseData' ] [ 'results' ]
+
+  #   for result in results:
+  #     score = self.calculate_BM25_score(result)
+  #     self.urls.put((score,(result.encode('utf8'),1))) #All google results are at depth 1 with google.com being at depth 0
 
   def fetch_google_results(self):
     search = pygoogle(self.query)
@@ -45,7 +65,7 @@ class WebCrawler:
     print "Google Results Fetched"
     for result in results:
       score = self.calculate_BM25_score(result)
-      self.urls.put((score,(result.encode('utf8'),1))) #All google results are at depth 1 with google.com being at depth 0 | Initially priority is 0
+      self.urls.put((score,(result.encode('utf8'),1))) #All google results are at depth 1 with google.com being at depth 0
 
 
   def normalize_url(self,url):
