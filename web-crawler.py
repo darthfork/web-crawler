@@ -16,7 +16,7 @@ class WebCrawler:
     self.query = query
     self.urls = Q.PriorityQueue() # Priority Queue of URLs to be visited and their depth [(score,(url,depth))]
     self.visited = {} # Dictionary keeping track of all the visited URLs
-    self.valid_mime_types = ["text/html"]
+    self.valid_mime_types = ["text/html","text/plain","text/enriched"]
     self.connectives = ['or','and','is','this']
     self.illegal_extensions = ['gci','gif','jpg','png','css','js']
     self.depth_reached = 0
@@ -26,7 +26,6 @@ class WebCrawler:
     webpage = 'temp.html'
     bm25 = BM25(webpage,delimiter=' ')
     query = self.query.split()
-    #get single normalized value of BM25 score for a page
     score = bm25.BM25Score(query)
 
     try:
@@ -47,8 +46,6 @@ class WebCrawler:
   def normalize_url(self,url):
     return urlnorm.norm(url).encode('utf8') #URL normalization method
 
-  def print_visited_urls(self):
-    print self.visited
 
   def parse_page(self,html_document,depth,query):
     url_components = urlparse(self.url)
@@ -97,8 +94,10 @@ class WebCrawler:
 
       if mime_type in self.valid_mime_types:
         self.parse_page(document,depth,self.query)
+      else:
+        continue
 
-    self.print_urls()
+    print self.visited
 
 def main():
   query = 'dog'#raw_input ( 'Query: ' )
