@@ -7,6 +7,7 @@ import ranking_function
 import Queue as Q
 import robotparser
 import urlparse
+import BeautifulSoup
 from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
@@ -27,7 +28,9 @@ class WebCrawler:
     self.url_controller = customURLlib()
 
   def calculate_BM25_score(self,url):
-    page = self.urllib2.urlopen(url)
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', 'Mozilla/5.0' )
+    page = urllib2.urlopen(req)
     data = page.readlines()
     bm25 = BM25(data,delimiter=' ')
     query = self.query.split()
