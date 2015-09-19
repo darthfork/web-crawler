@@ -1,10 +1,11 @@
 import os
 import re
+import customurllib
+import urllib2
 import urlnorm
 import ranking_function
 import Queue as Q
 import robotparser
-import customurllib
 import urlparse
 from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
@@ -26,17 +27,11 @@ class WebCrawler:
     self.url_controller = customURLlib()
 
   def calculate_BM25_score(self,url):
-    self.url_controller.retrieve(url,"temp.html")
-    webpage = 'temp.html'
-    bm25 = BM25(webpage,delimiter=' ')
+    page = self.urllib2.urlopen(url)
+    data = page.readlines()
+    bm25 = BM25(data,delimiter=' ')
     query = self.query.split()
     score = bm25.BM25Score(query)
-
-    try:
-      os.remove(webpage)
-    except OSError:
-      print "Unable to remove File"
-
     return score
 
   # #Alternate Method for Testing | To be commented out if not in Use
@@ -46,19 +41,11 @@ class WebCrawler:
   #   print "Searcing Google"
   #   search_query = urllib.urlencode ( { 'q' : self.query } )
   #   #Find a better way to get Google Results
-
-
   #   res1 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5').read()
-
   #   res2 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5&start=5').read()
-
-
   #   json1 = json.loads ( res1 )
-
   #   json2 = json.loads ( res2 )
-
   #   results = json1 [ 'responseData' ] [ 'results' ] + json2 [ 'responseData' ] [ 'results' ]
-
   #   for result in results:
   #     print result['url']
   #     score = self.calculate_BM25_score(result['url'])
@@ -77,7 +64,6 @@ class WebCrawler:
 
   def normalize_url(self,url):
     return str(urlnorm.norm(url).encode("utf-8")) #URL normalization method
-    #Normalization temporarily removed
 
   def is_illegal_folder(self,url):
     for f in self.illegal_folders:
