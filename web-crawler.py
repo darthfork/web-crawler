@@ -28,7 +28,8 @@ class WebCrawler:
     self.url_controller = customURLlib()
     self.output_file = open("output.txt",'w+')
     self.fetch_google_results()
-    #============= METHOD FOR GOOGLE SEARCHING =======================
+
+  #============= METHOD FOR GOOGLE SEARCHING =======================
   def fetch_google_results(self):
     print "Searching Google"
     search = pygoogle(self.query)
@@ -106,8 +107,8 @@ class WebCrawler:
       time = datetime.now().time()
       print "Now Crawling: " + url
       self.depth_reached = depth
-      try:
 
+      try:
         document = self.url_controller.open(url)
         mime_type = document.info().gettype()
         response_code = document.getcode()

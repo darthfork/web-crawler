@@ -1,5 +1,4 @@
 #Okapi BM25 ranking function for comparing pages
-
 import gensim
 from gensim import corpora
 import math
@@ -67,8 +66,3 @@ class BM25 :
             tfidf.append(doc_tfidf)
         return tfidf
 
-    def Items(self) :
-        # Return a list [(term_idx, term_desc),]
-        items = self.dictionary.items()
-        items.sort()
-        return items
