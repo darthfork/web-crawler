@@ -12,7 +12,7 @@ from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
 from customurllib import customURLlib
-
+from datetime import datetime
 class WebCrawler:
 
   def __init__(self,query):
@@ -26,16 +26,17 @@ class WebCrawler:
     self.depth_reached = 0
     # self.rp = robotparser.RobotFileParser()
     self.url_controller = customURLlib()
-
-  def calculate_BM25_score(self,url):
-    req = urllib2.Request(url)
-    req.add_header('User-Agent', 'Mozilla/5.0' )
-    page = urllib2.urlopen(req)
-    data = page.readlines()
-    bm25 = BM25(data,delimiter=' ')
-    query = self.query.split()
-    score = bm25.BM25Score(query)
-    return score
+    self.output_file = open("output.txt",'w+')
+    self.fetch_google_results()
+    #============= METHOD FOR GOOGLE SEARCHING =======================
+  def fetch_google_results(self):
+    print "Searching Google"
+    search = pygoogle(self.query)
+    results = search.get_urls()[:10] #Only get the first 10 results
+    for result in results:
+      print "Google Result: " + str(result)
+      score = self.calculate_BM25_score(result)
+      self.urls.put((score,(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
 
   # #Alternate Method for Testing | To be commented out if not in Use
   # def fetch_google_results(self):
@@ -54,16 +55,15 @@ class WebCrawler:
   #     score = self.calculate_BM25_score(result['url'])
   #     self.urls.put((score,(str(result['url']),1))) #All google results are at depth 1 with google.com being at depth 0
 
-  #============= METHOD FOR GOOGLE SEARCHING =======================
-  def fetch_google_results(self):
-    print "Searching Google"
-    search = pygoogle(self.query)
-    results = search.get_urls()[:10] #Only get the first 10 results
-    for result in results:
-      print "Google Result: " + str(result)
-      score = self.calculate_BM25_score(result)
-      self.urls.put((score,(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
-
+  def calculate_BM25_score(self,url):
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', 'Mozilla/5.0' )
+    page = urllib2.urlopen(req)
+    data = page.readlines()
+    bm25 = BM25(data,delimiter=' ')
+    query = self.query.split()
+    score = bm25.BM25Score(query)
+    return score
 
   def normalize_url(self,url):
     return str(urlnorm.norm(url).encode("utf-8")) #URL normalization method
@@ -98,45 +98,38 @@ class WebCrawler:
 
 
   def crawl(self):
-
     while len(self.visited) <= 100 and not self.urls.empty():
-
       next_url = self.urls.get()
       score = int(next_url[0])
       url = str(next_url[1][0])
-
       depth = int(next_url[1][1])
-
-      print "Now Crawling: " + str(url)
+      time = datetime.now().time()
+      print "Now Crawling: " + url
       self.depth_reached = depth
       try:
 
         document = self.url_controller.open(url)
-
         mime_type = document.info().gettype()
+        response_code = document.getcode()
 
       # Normalise the URL before inserting
-
         self.visited[self.normalize_url(url)] = depth
 
         if (mime_type in self.valid_mime_types):
           self.parse_page(document,depth,self.query)
+
+          output = url + " | " + str(score) + " | " + str(response_code) + " | " + str(time.hour) + ":" + str(time.minute) + ":" + str(time.second) +"\n"
+
+          output_file.write(output_string)
+
         else:
           continue
       except IOError as e:
         print e
 
-
-    print self.visited
-    print self.urls
-
 def main():
   query = raw_input ( 'Query: ' )
-
   crawler = WebCrawler(query)
-
-  crawler.fetch_google_results()
-
   crawler.crawl()
 
 
