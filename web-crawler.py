@@ -43,22 +43,25 @@ class WebCrawler:
       self.write_to_file(result,score,code,time)
       self.pages_crawled += 1
 
-  # #Alternate Method for Testing | To be commented out if not in Use
+  #Alternate Method for Testing | To be commented out if not in Use
   # def fetch_google_results(self):
   #   import urllib
   #   import json
   #   print "Searcing Google"
   #   search_query = urllib.urlencode ( { 'q' : self.query } )
-  #   #Find a better way to get Google Results
   #   res1 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5').read()
   #   res2 = urllib.urlopen('http://ajax.googleapis.com/ajax/services/search/web?v=1.0&'+search_query+'&rsz=5&start=5').read()
   #   json1 = json.loads ( res1 )
   #   json2 = json.loads ( res2 )
   #   results = json1 [ 'responseData' ] [ 'results' ] + json2 [ 'responseData' ] [ 'results' ]
   #   for result in results:
-  #     print result['url']
-  #     score = self.calculate_BM25_score(result['url'])
-  #     self.urls.put((score,(str(result['url']),1))) #All google results are at depth 1 with google.com being at depth 0
+  #     print "Google Result: " + str(result)
+  #     time = datetime.now().time()
+  #     score,code = self.calculate_BM25_score(result)
+  #     if (not (score == None)) and (code == 200):
+  #       self.urls.put((score,(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
+  #     self.write_to_file(result,score,code,time)
+  #     self.pages_crawled += 1
 
   def calculate_BM25_score(self,url):
     req = urllib2.Request(url)
