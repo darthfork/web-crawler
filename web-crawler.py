@@ -1,11 +1,8 @@
 import re
-import customurllib
 import urllib2
 import urlnorm
-import ranking_function
 import Queue as Q
 import urlparse
-import BeautifulSoup
 from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
