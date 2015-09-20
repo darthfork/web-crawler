@@ -18,6 +18,7 @@ class WebCrawler:
     self.query = query
     self.urls = Q.PriorityQueue() # Priority Queue of URLs to be visited and their depth [(score,(url,depth))]
     self.visited = {} # Dictionary keeping track of all the visited URLs
+    self.pages_crawled = 0 #Number of pages crawled
     self.valid_mime_types = ["text/html","text/plain","text/enriched"]
     self.connectives = ['or','and','is','this']
     self.illegal_extensions = ['gci','gif','jpg','png','css','js','mp3','mp4','mkv']
@@ -38,8 +39,9 @@ class WebCrawler:
       time = datetime.now().time()
       score,code = self.calculate_BM25_score(result)
       if (not (score == None)) and (code == 200):
-        self.urls.put((score[0],(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
+        self.urls.put((score,(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
       self.write_to_file(result,score,code,time)
+      self.pages_crawled += 1
 
   # #Alternate Method for Testing | To be commented out if not in Use
   # def fetch_google_results(self):
@@ -83,7 +85,7 @@ class WebCrawler:
       return (None, None)
 
   def write_to_file(self,url,score,code,time):
-    output = href + " | " + str(score) + " | " + str(code) + " | " + str(time.hour) + ":" + str(time.minute) + ":" + str(time.second) +"\n"
+    output = url + " | " + str(score) + " | " + str(code) + " | " + str(time.hour) + ":" + str(time.minute) + ":" + str(time.second) +"\n"
     self.output_file.write(output)
 
   def normalize_url(self,url):
@@ -106,28 +108,32 @@ class WebCrawler:
       return False
 
   def parse_page(self,html_document,depth,query):
-    print "Parsing URL"
     soup = BeautifulSoup(html_document)
     new_depth = depth + 1
+    parsed_urls = []
     for link in soup.findAll('a', attrs={'href': re.compile("^(http|https)://")}):
       href = str(link.get('href'))
+      if normalize_url( href ) in parsed_urls:
+        continue
+      else:
+        parsed_urls.append(normalize_url( href ))
       print "Now Crawling: " + str(href)
       if not(self.normalize_url( href ) in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False):
 
         time = datetime.now().time()
 
-        score, code = self.calculate_BM25_score(href) #BM25 score for the webpage | score[1] = response code
+        score, code = self.calculate_BM25_score(href) #BM25 score for the webpage | code = response code
 
         if (not (score == None)) and (code == 200):
           self.urls.put((score,(href,new_depth)))
+          self.pages_crawled += 1
 
         self.write_to_file(href,score,code,time)
 
 
   def crawl(self):
-    while len(self.visited) <= 100 and not self.urls.empty():
+    while self.pages_crawled <= 500 and not self.urls.empty():
       next_url = self.urls.get()
-      import pdb; pdb.set_trace()
       score = int(next_url[0])
       url = str(next_url[1][0])
       depth = int(next_url[1][1])
