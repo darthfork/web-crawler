@@ -1,4 +1,3 @@
-import os
 import re
 import customurllib
 import urllib2
@@ -36,8 +35,11 @@ class WebCrawler:
     results = search.get_urls()[:10] #Only get the first 10 results
     for result in results:
       print "Google Result: " + str(result)
-      score = self.calculate_BM25_score(result)
-      self.urls.put((score,(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
+      time = datetime.now().time()
+      score,code = self.calculate_BM25_score(result)
+      if (not (score == None)) and (code == 200):
+        self.urls.put((score[0],(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
+      self.write_to_file(result,score,code,time)
 
   # #Alternate Method for Testing | To be commented out if not in Use
   # def fetch_google_results(self):
@@ -59,12 +61,30 @@ class WebCrawler:
   def calculate_BM25_score(self,url):
     req = urllib2.Request(url)
     req.add_header('User-Agent', 'Mozilla/5.0' )
-    page = urllib2.urlopen(req)
-    data = page.readlines()
-    bm25 = BM25(data,delimiter=' ')
-    query = self.query.split()
-    score = bm25.BM25Score(query)
-    return score
+    try:
+      page = urllib2.urlopen(req)
+      code = page.getcode()
+      data = page.readlines()
+      bm25 = BM25(data,delimiter=' ')
+      query = self.query.split()
+      score = bm25.BM25Score(query)
+      return (score, code)
+    except urllib2.HTTPError, err:
+      if err.code == 404:
+        print "Page not found!"
+      elif err.code == 403:
+        print "Access denied!"
+      else:
+        print "Error code: " + str(err.code)
+
+      return (None,err.code)
+    except urllib2.URLError, err:
+      print "Error: " + str(err.reason)
+      return (None, None)
+
+  def write_to_file(self,url,score,code,time):
+    output = href + " | " + str(score) + " | " + str(code) + " | " + str(time.hour) + ":" + str(time.minute) + ":" + str(time.second) +"\n"
+    self.output_file.write(output)
 
   def normalize_url(self,url):
     return str(urlnorm.norm(url).encode("utf-8")) #URL normalization method
@@ -85,44 +105,45 @@ class WebCrawler:
     else:
       return False
 
-
   def parse_page(self,html_document,depth,query):
     print "Parsing URL"
     soup = BeautifulSoup(html_document)
-    new_depth = depth+1
+    new_depth = depth + 1
     for link in soup.findAll('a', attrs={'href': re.compile("^(http|https)://")}):
       href = str(link.get('href'))
       print "Now Crawling: " + str(href)
       if not(self.normalize_url( href ) in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False):
-        score = self.calculate_BM25_score(href) #BM25 score for the webpage
-        self.urls.put((score,(href,new_depth)))
+
+        time = datetime.now().time()
+
+        score, code = self.calculate_BM25_score(href) #BM25 score for the webpage | score[1] = response code
+
+        if (not (score == None)) and (code == 200):
+          self.urls.put((score,(href,new_depth)))
+
+        self.write_to_file(href,score,code,time)
 
 
   def crawl(self):
     while len(self.visited) <= 100 and not self.urls.empty():
       next_url = self.urls.get()
+      import pdb; pdb.set_trace()
       score = int(next_url[0])
       url = str(next_url[1][0])
       depth = int(next_url[1][1])
-      time = datetime.now().time()
+
       print "Now Crawling: " + url
       self.depth_reached = depth
 
       try:
         document = self.url_controller.open(url)
         mime_type = document.info().gettype()
-        response_code = document.getcode()
 
       # Normalise the URL before inserting
         self.visited[self.normalize_url(url)] = depth
 
         if (mime_type in self.valid_mime_types):
           self.parse_page(document,depth,self.query)
-
-          output = url + " | " + str(score) + " | " + str(response_code) + " | " + str(time.hour) + ":" + str(time.minute) + ":" + str(time.second) +"\n"
-
-          output_file.write(output_string)
-
         else:
           continue
       except IOError as e:

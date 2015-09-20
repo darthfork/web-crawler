@@ -56,7 +56,7 @@ class BM25 :
                 below = ((doc[term]) + k1*(1 - b + b*doc_terms_len/self.DocAvgLen))
                 tmp_score.append(self.DocIDF[term] * upper / below)
             scores.append(sum(tmp_score))
-        return sum(scores)
+        return math.ceil(sum(scores))
 
     def TFIDF(self) :
         tfidf = []
