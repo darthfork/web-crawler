@@ -122,14 +122,14 @@ class WebCrawler:
     else:
       return False
 
-  # '''
-  #   Method for skipping sites like amazon using hardcode
-  # '''
-  # def skip_specific_websites(self,url):
-  #   if re.search('\bamazon\b',url):
-  #     return True
-  #   else:
-  #     return False
+  '''
+    Method for skipping sites like amazon using hardcode
+  '''
+  def skip_specific_websites(self,url):
+    if re.search('\bamazon\b',url):
+      return True
+    else:
+      return False
 
   '''
     Parse the page and return all the links along with their ranking function score
