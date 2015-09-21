@@ -12,7 +12,7 @@ To execute the program install all the libraries listed in the requirements.txt 
 
 Known Bugs:
 
-1. The program, for some webpages throws an error where it has trouble parsing some unicode to utf-8 while calculating BM25 score. I am unsure what MIME type is causing this error and I am unable to recreate it.
+1. The program, for some webpages throws a UnicodeEncodeError where it has trouble parsing some unicode to utf-8 while calculating BM25 score and other places. I am unsure what MIME type is causing this error and I am unable to recreate it.
 
 Output file pattern:
 

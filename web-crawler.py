@@ -4,6 +4,7 @@ import httplib
 import urlnorm
 import Queue as Q
 import urlparse
+import ssl
 from ranking_function import BM25
 from BeautifulSoup import BeautifulSoup
 from pygoogle import pygoogle
@@ -22,11 +23,12 @@ class WebCrawler:
     self.query = query #Search Query
     self.urls = Q.PriorityQueue() # Priority Queue of URLs to be visited and their depth [(score,(url,depth))]
     self.visited = {} # Dictionary keeping track of all the visited URLs
+    self.parsed_urls = set() #List to keep track of extracted links in order to avoid repetition
     self.pages_crawled = 0 #Number of pages crawled
     self.valid_mime_types = ["text/html","text/plain","text/enriched"] #Only these MIME types are to be parsed
     self.connectives = ['or','and','is','this']
     self.illegal_extensions = ['gci','gif','jpg','png','css','js','mp3','mp4','mkv','ppt','doc','pdf','pptx','docx','rar','zip','xls','xlsx']
-    self.illegal_folders = ['/cgi-bin/','/images/','/javascripts/','/js/','/css/','/stylesheets/']
+    self.illegal_folders = ['/cgi-bin/','/images/','/javascripts/','/photos/','/js/','/css/','/stylesheets/']
     self.depth_reached = 0
     self.url_controller = customURLlib()
     self.output_file = open("output.txt",'w+')
@@ -43,6 +45,10 @@ class WebCrawler:
     results = search.get_urls()[:10] #Only get the first 10 results
     for result in results:
       print "Google Result: " + str(result)
+
+      if ( self.skip_specific_websites(result) == True ):
+        continue
+
       time = datetime.now().time()
       score,code = self.calculate_BM25_score(result)
       if (not (score == None)) and (code == 200) and (self.is_illegal_folder(result) == False) and (self.is_illegal_extension(result) == False) :
@@ -80,6 +86,10 @@ class WebCrawler:
     except httplib.HTTPException:
       print "Error"
       return (None, None)
+    except ssl.CertificateError:
+      print "SSL CertificateError"
+      return (None,None)
+
   '''
     Method for writing the results to file
 
@@ -113,6 +123,15 @@ class WebCrawler:
       return False
 
   '''
+    Method for skipping sites like amazon using hardcode
+  '''
+  def skip_specific_websites(self,url):
+    if re.search('\bamazon\b',url):
+      return True
+    else:
+      return False
+
+  '''
     Parse the page and return all the links along with their ranking function score
     The method opens the page and retrieves all the links and adds it to the Priority Queue to be parsed later
   '''
@@ -121,39 +140,42 @@ class WebCrawler:
 
     soup = BeautifulSoup(html_document)
     new_depth = depth + 1 # Breadth first search depth of the page
-    parsed_urls = set() #List to keep track of extracted links in order to avoid repetition
+
 
     for link in soup.findAll('a', attrs={'href': re.compile("^(http|https)://")}): #Finding all the links with http|https starting
+      try:
+        href = str(link.get('href')) #The actual link string
 
-      href = str(link.get('href')) #The actual link string
+        #Check if the link has already been encountered
+        if href in self.parsed_urls:
+          continue
+        else:
+          self.parsed_urls.add(href)
 
-      #Check if the link has already been encountered
-      if href in parsed_urls:
-        continue
-      else:
-        parsed_urls.add(href)
+        print "Now Crawling: " + str(href)
 
-      print "Now Crawling: " + str(href)
+        '''
+          The following checks are performed in the block that follows:
 
-      '''
-        The following checks are performed in the block that follows:
+          1. If the URL has already been parsed - Check visited Dictionary
+          2. If the URL is an illegal folder as described above
+          3. If the URL has an illegal extension as described above
+        '''
 
-        1. If the URL has already been parsed - Check visited Dictionary
-        2. If the URL is an illegal folder as described above
-        3. If the URL has an illegal extension as described above
-      '''
+        if not(href in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False) and ( self.skip_specific_websites(href) == False ):
 
-      if not(href in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False):
+          time = datetime.now().time()
 
-        time = datetime.now().time()
+          score, code = self.calculate_BM25_score(href) #BM25 score for the webpage | code = response code
 
-        score, code = self.calculate_BM25_score(href) #BM25 score for the webpage | code = response code
+          if (not (score == None)) and (code == 200):
+            self.urls.put((score,(href,new_depth)))
+            self.pages_crawled += 1
 
-        if (not (score == None)) and (code == 200):
-          self.urls.put((score,(href,new_depth)))
-          self.pages_crawled += 1
-
-        self.write_to_file(href,score,new_depth,code,time)
+          self.write_to_file(href,score,new_depth,code,time)
+      except UnicodeEncodeError:
+        print "Error"
+        pass
 
 
   '''
