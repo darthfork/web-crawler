@@ -1,4 +1,4 @@
-# Web Search Engine
+# Web Crawler
 Basic Web Crawler written in Python
 
 List of files:
