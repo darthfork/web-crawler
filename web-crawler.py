@@ -27,7 +27,7 @@ class WebCrawler:
     self.pages_crawled = 0 #Number of pages crawled
     self.valid_mime_types = ["text/html","text/plain","text/enriched"] #Only these MIME types are to be parsed
     self.connectives = ['or','and','is','this']
-    self.illegal_extensions = ['gci','gif','jpg','png','css','js','mp3','mp4','mkv','ppt','doc','pdf','pptx','docx','rar','zip','xls','xlsx']
+    self.illegal_extensions = ['cgi','gif','jpg','png','css','js','mp3','mp4','mkv','ppt','doc','pdf','pptx','docx','rar','zip','xls','xlsx']
     self.illegal_folders = ['/cgi-bin/','/images/','/javascripts/','/photos/','/js/','/css/','/stylesheets/']
     self.depth_reached = 0
     self.url_controller = customURLlib()
