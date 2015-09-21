@@ -1,5 +1,6 @@
 import re
 import urllib2
+import httplib
 import urlnorm
 import Queue as Q
 import urlparse
@@ -24,7 +25,7 @@ class WebCrawler:
     self.pages_crawled = 0 #Number of pages crawled
     self.valid_mime_types = ["text/html","text/plain","text/enriched"] #Only these MIME types are to be parsed
     self.connectives = ['or','and','is','this']
-    self.illegal_extensions = ['gci','gif','jpg','png','css','js','mp3','mp4','mkv','ppt','doc',',pdf','pptx','docx','rar','zip','xls','xlsx']
+    self.illegal_extensions = ['gci','gif','jpg','png','css','js','mp3','mp4','mkv','ppt','doc','pdf','pptx','docx','rar','zip','xls','xlsx']
     self.illegal_folders = ['/cgi-bin/','/images/','/javascripts/','/js/','/css/','/stylesheets/']
     self.depth_reached = 0
     self.url_controller = customURLlib()
@@ -35,6 +36,7 @@ class WebCrawler:
     METHOD FOR GOOGLE SEARCHING
     This method fetches the first 10 google results based on the query passed by the user.
   '''
+
   def fetch_google_results(self):
     print "Searching Google"
     search = pygoogle(self.query)
@@ -43,9 +45,9 @@ class WebCrawler:
       print "Google Result: " + str(result)
       time = datetime.now().time()
       score,code = self.calculate_BM25_score(result)
-      if (not (score == None)) and (code == 200):
+      if (not (score == None)) and (code == 200) and (self.is_illegal_folder(result) == False) and (self.is_illegal_extension(result) == False) :
         self.urls.put((score,(str(result),1))) #All google results are at depth 1 with google.com being at depth 0
-      self.write_to_file(result,score,code,time)
+      self.write_to_file(result,score,int(1),code,time)
       self.pages_crawled += 1
 
   '''
@@ -71,26 +73,21 @@ class WebCrawler:
         print "Access denied!"
       else:
         print "Error code: " + str(err.code)
-
       return (None,err.code)
     except urllib2.URLError, err:
       print "Error: " + str(err.reason)
       return (None, None)
-
+    except httplib.HTTPException:
+      print "Error"
+      return (None, None)
   '''
     Method for writing the results to file
 
-    Pattern = "URL | BM25 score | return code | time"
+    Pattern = "URL | BM25 score | depth | return code | time"
   '''
-  def write_to_file(self,url,score,code,time):
-    output = url + " | " + str(score) + " | " + str(code) + " | " + str(time.hour) + ":" + str(time.minute) + ":" + str(time.second) +"\n"
+  def write_to_file(self,url,score,depth,code,time):
+    output = url + " | " + str(score) + " | " + str(depth) + " | " + str(code) + " | " + str(time.hour) + ":" + str(time.minute) + ":" + str(time.second) +"\n"
     self.output_file.write(output)
-
-  '''
-    Method to normalize url before inserting it into the dictionary for visited URLs
-  '''
-  def normalize_url(self,url):
-    return str(urlnorm.norm(url).encode("utf-8")) #URL normalization method
 
   '''
     Method to check if the URL is an image/javascripts/css/cgi-bin folder
@@ -124,17 +121,17 @@ class WebCrawler:
 
     soup = BeautifulSoup(html_document)
     new_depth = depth + 1 # Breadth first search depth of the page
-    parsed_urls = [] #List to keep track of extracted links in order to avoid repetition
+    parsed_urls = set() #List to keep track of extracted links in order to avoid repetition
 
     for link in soup.findAll('a', attrs={'href': re.compile("^(http|https)://")}): #Finding all the links with http|https starting
 
       href = str(link.get('href')) #The actual link string
 
       #Check if the link has already been encountered
-      if normalize_url( href ) in parsed_urls:
+      if href in parsed_urls:
         continue
       else:
-        parsed_urls.append(normalize_url( href ))
+        parsed_urls.add(href)
 
       print "Now Crawling: " + str(href)
 
@@ -146,7 +143,7 @@ class WebCrawler:
         3. If the URL has an illegal extension as described above
       '''
 
-      if not(self.normalize_url( href ) in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False):
+      if not(href in self.visited) and (self.is_illegal_folder(href) == False) and (self.is_illegal_extension(href) == False):
 
         time = datetime.now().time()
 
@@ -156,7 +153,7 @@ class WebCrawler:
           self.urls.put((score,(href,new_depth)))
           self.pages_crawled += 1
 
-        self.write_to_file(href,score,code,time)
+        self.write_to_file(href,score,new_depth,code,time)
 
 
   '''
@@ -186,7 +183,7 @@ class WebCrawler:
         mime_type = document.info().gettype()
 
       # Normalise the URL before inserting
-        self.visited[self.normalize_url(url)] = depth
+        self.visited[url] = depth
 
         if (mime_type in self.valid_mime_types):
           self.parse_page(document,depth,self.query)
@@ -194,6 +191,8 @@ class WebCrawler:
           continue
       except IOError as e:
         print e
+
+      self.output_file.write("Number of links crawled = " + str(self.pages_crawled))
 
 def main():
   query = raw_input ( 'Query: ' )

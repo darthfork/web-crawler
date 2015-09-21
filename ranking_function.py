@@ -30,38 +30,46 @@ class BM25 :
             self.dictionary.add_documents(raw_data)
         except IOError:
             pass
+        except UnicodeDecodeError:
+            pass
 
     def TFIDF_Generator(self, base=math.e) :
-        docTotalLen = 0
-        for line in self.fn_docs:
-            doc = line.strip().split(self.delimiter)
-            docTotalLen += len(doc)
-            self.DocLen.append(len(doc))
-            #print self.dictionary.doc2bow(doc)
-            bow = dict([(term, freq*1.0/len(doc)) for term, freq in self.dictionary.doc2bow(doc)])
-            for term, tf in bow.items() :
-                if term not in self.DF :
-                    self.DF[term] = 0
-                self.DF[term] += 1
-            self.DocTF.append(bow)
-            self.N = self.N + 1
-        for term in self.DF:
-            self.DocIDF[term] = math.log((self.N - self.DF[term] +0.5) / (self.DF[term] + 0.5), base)
-        self.DocAvgLen = docTotalLen / self.N
+        try:
+            docTotalLen = 0
+            for line in self.fn_docs:
+                doc = line.strip().split(self.delimiter)
+                docTotalLen += len(doc)
+                self.DocLen.append(len(doc))
+                #print self.dictionary.doc2bow(doc)
+                bow = dict([(term, freq*1.0/len(doc)) for term, freq in self.dictionary.doc2bow(doc)])
+                for term, tf in bow.items() :
+                    if term not in self.DF :
+                        self.DF[term] = 0
+                    self.DF[term] += 1
+                self.DocTF.append(bow)
+                self.N = self.N + 1
+            for term in self.DF:
+                self.DocIDF[term] = math.log((self.N - self.DF[term] +0.5) / (self.DF[term] + 0.5), base)
+            self.DocAvgLen = docTotalLen / self.N
+        except UnicodeDecodeError:
+            pass
 
     def BM25Score(self, Query=[], k1=1.5, b=0.75) :
-        query_bow = self.dictionary.doc2bow(Query)
-        scores = []
-        for idx, doc in enumerate(self.DocTF) :
-            commonTerms = set(dict(query_bow).keys()) & set(doc.keys())
-            tmp_score = []
-            doc_terms_len = self.DocLen[idx]
-            for term in commonTerms :
-                upper = (doc[term] * (k1+1))
-                below = ((doc[term]) + k1*(1 - b + b*doc_terms_len/self.DocAvgLen))
-                tmp_score.append(self.DocIDF[term] * upper / below)
-            scores.append(sum(tmp_score))
-        return int(math.ceil(sum(scores)))
+        try:
+            query_bow = self.dictionary.doc2bow(Query)
+            scores = []
+            for idx, doc in enumerate(self.DocTF) :
+                commonTerms = set(dict(query_bow).keys()) & set(doc.keys())
+                tmp_score = []
+                doc_terms_len = self.DocLen[idx]
+                for term in commonTerms :
+                    upper = (doc[term] * (k1+1))
+                    below = ((doc[term]) + k1*(1 - b + b*doc_terms_len/self.DocAvgLen))
+                    tmp_score.append(self.DocIDF[term] * upper / below)
+                scores.append(sum(tmp_score))
+            return int(math.ceil(sum(scores)))
+        except ZeroDivisionError:
+             pass
 
     def TFIDF(self) :
         tfidf = []
