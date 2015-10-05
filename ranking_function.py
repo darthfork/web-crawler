@@ -1,5 +1,5 @@
 '''
-    This gile calcualtes the Okapi BM25 ranking function for comparing pages
+    This file calcualtes the Okapi BM25 ranking function for comparing pages
     The web-crawler file passes a webpage to this file
     The method BM25 score is then invoked which calculates the BM25 score of the webpage based on a specified query.
     References: https://en.wikipedia.org/wiki/Okapi_BM25
