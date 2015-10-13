@@ -38,3 +38,4 @@ Execution:
 
 7. After the required no. of links have been crawled, the output is written to a file "output.txt"
 
+[![Code Climate](https://codeclimate.com/github/abhi56rai/web-crawler/badges/gpa.svg)](https://codeclimate.com/github/abhi56rai/web-crawler)
