@@ -1,6 +1,8 @@
 # Web Crawler
 Basic Web Crawler written in Python
 
+[![Code Climate](https://codeclimate.com/github/abhi56rai/web-crawler/badges/gpa.svg)](https://codeclimate.com/github/abhi56rai/web-crawler)
+
 List of files:
 
 1. web-crawler.py - Main program file containing the crawler, the parser and a method to fetch results from google. This file when executed crawls the web based on a query passed by the user
@@ -38,4 +40,3 @@ Execution:
 
 7. After the required no. of links have been crawled, the output is written to a file "output.txt"
 
-[![Code Climate](https://codeclimate.com/github/abhi56rai/web-crawler/badges/gpa.svg)](https://codeclimate.com/github/abhi56rai/web-crawler)
